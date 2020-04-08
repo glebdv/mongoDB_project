@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify')
+const geocoder = require('../utils/geocoder')
 
 const BootcampSchema = new mongoose.Schema({
     name: {
@@ -8,14 +10,16 @@ const BootcampSchema = new mongoose.Schema({
         trim: true,
         maxlength: [50, 'Name can not be more than 50 characters'],
     },
-    //url friendly version of name. ex: "Dev central bootcamp" => "devcentral-bootcamp"
-    slug: String,
+    //slug: url friendly version of name. ex: "Dev central bootcamp" => "devcentral-bootcamp"
+    slug: {
+        type: String,
+        unique: true,
+    },
     description: {
         type: String,
         required: [true, 'Please add a name'],
         maxlength: [500, 'Description can not be more than 500 characters'],
     },
-    // https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)
     website: {
         type: String,
         match: [
@@ -101,5 +105,32 @@ const BootcampSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
+
+// create slug out of name
+BootcampSchema.pre('save', function (next) { //no arrow function due to different bindings for "this" keyword
+    this.slug = slugify(this.name, {
+        lower: true
+    })
+    next();
+})
+
+// geocode & create location field
+BootcampSchema.pre('save', async function (next) {
+    const loc = await geocoder.geocode(this.address);
+    this.location = {
+        type: 'Point',
+        coordinates: [loc[0].longitude, loc[0].latitude],
+        formattedAddress: loc[0].formattedAddress,
+        street: loc[0].streetName,
+        city: loc[0].city,
+        state: loc[0].stateCode,
+        zipcode: loc[0].zipcode,
+        country: loc[0].countryCode,
+    };
+
+    // do not save address in db
+    this.address = undefined
+    next();
+})
 
 module.exports = mongoose.model('Bootcamp', BootcampSchema);

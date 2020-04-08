@@ -8,12 +8,24 @@ const errorHandler = (err, req, res, next) => {
     // need to do this because err is not a common object copied fully with spread above.
     error.message = err.message
     // log to console for dev
-    console.log(err.stack.red);
+    console.log(err);
 
     // mongoose bad ObjectId
     if (err.name === 'CastError') {
         const message = `Bootcamp not found with id of ${err.value}`
         error = new ErrorResponse(message, 404)
+    }
+
+    // mongoose duplicate key
+    if (err.code === 11000) {
+        const message = `Duplicate key. Please use a different ${Object.keys(err.keyValue)}`
+        error = new ErrorResponse(message, 400)
+    }
+
+    // mongoose validation (required) error
+    if (err.name === 'ValidationError') {
+        const message = Object.values(err.errors).map(error => " " + error.message)
+        error = new ErrorResponse(message, 400)
     }
 
     res.status(error.statusCode || 500).json({
