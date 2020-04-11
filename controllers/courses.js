@@ -48,11 +48,18 @@ exports.getCourse = asyncHandler(async (req, res, next) => {
 // @access      Private
 exports.addCourse = asyncHandler(async (req, res, next) => {
     req.body.bootcamp = req.params.bootcampId
+    req.body.user = req.user.id //access to user because of auth.js protect in middleware. 
 
     const bootcamp = await Bootcamp.findById(req.params.bootcampId)
 
     if(!bootcamp) {
         return next(new ErrorResponse(`No bootcamp with the id of ${req.params.bootcampId}`, 404))
+    }
+
+    // make sure user is bootcamp owner. 
+    // Bootcamp has access to user because it's passed in the Bootcamp model  @IMP
+    if (bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
+        return next(new ErrorResponse(`User ${req.user.id} is not authorized to add a course to bootcamp ${bootcamp._id}`, 401))
     }
 
     const course = await Course.create(req.body)
@@ -71,6 +78,12 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
 
     if(!course) {
         return next(new ErrorResponse(`No course found with the id of ${req.params.bootcampId}`, 404))
+    }
+
+    // make sure user is course owner. 
+    // Bootcamp has access to user because it's passed in the Bootcamp model  @IMP
+    if (course.user.toString() !== req.user.id && req.user.role !== 'admin') {
+        return next(new ErrorResponse(`User ${req.user.id} is not authorized to update course ${course._id}`, 401))
     }
 
     //update course values
@@ -93,6 +106,12 @@ exports.deleteCourse = asyncHandler(async (req, res, next) => {
 
     if(!course) {
         return next(new ErrorResponse(`No course found with the id of ${req.params.bootcampId}`, 404))
+    }
+
+    // make sure user is course owner. 
+    // Bootcamp has access to user because it's passed in the Bootcamp model  @IMP
+    if (course.user.toString() !== req.user.id && req.user.role !== 'admin') {
+        return next(new ErrorResponse(`User ${req.user.id} is not authorized to delete course ${course._id}`, 401))
     }
 
     //update course values
