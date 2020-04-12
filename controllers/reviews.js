@@ -103,7 +103,7 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
     }
 
     if(req.user.id !== review.user.toString() && req.user.role !== 'admin') {
-        next(new ErrorResponse(`Not authorized to edit review ${req.review._id}`, 401))
+        next(new ErrorResponse(`Not authorized to delete review ${req.review._id}`, 401))
     }
 
     //update review values
