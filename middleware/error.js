@@ -12,7 +12,10 @@ const errorHandler = (err, req, res, next) => {
 
     // mongoose bad ObjectId
     if (err.name === 'CastError') {
-        const message = `Bootcamp not found with id of ${err.value}`
+        const splitMessage = err.message.split(" ")
+        const modelName = splitMessage[splitMessage.length - 1]
+        // const message = `Resource (model name: ${modelName}) not found with id of ${err.value}`
+        const message = "Resource not found"
         error = new ErrorResponse(message, 404)
     }
 

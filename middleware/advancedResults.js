@@ -1,42 +1,42 @@
-//Pagination, filters, select, sort
+// Pagination, filters, select, sort
 const advancedResults = (model, populate) => async (req, res, next) => {
     let query
 
-    //copy query
+    // copy query
     const reqQuery = { ...req.query }
 
-    //fields to exclude
+    // special fields to exclude (because they do specific things)
     const removeFiels = ['select', 'sort', 'page', 'limit']
 
-    //loop over remove fields and delete them from requestQuery
+    // loop over remove fields and delete them from requestQuery
     removeFiels.forEach(param => delete reqQuery[param])
     
-    //create query string
+    // create query string
     let queryStr = JSON.stringify(reqQuery)
     
-    //create query string by params + use 
-    //gt = greater than; lt = lower than; e = equal; in = in array ex: careers[in]=Business
+    // create query string by params + use 
+    // gt = greater than; lt = lower than; e = equal; in = in array ex: careers[in]=Business
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`)
     
-    //find resource
-    query = model.find(JSON.parse(queryStr))//.populate('courses') //if specific courses, look into controllers/courses.js => getCourses => populate method
+    // find resource
+    query = model.find(JSON.parse(queryStr))// .populate('courses') // if specific courses, look into controllers/courses.js => getCourses => populate method
 
-    //select fields
+    // select fields
     if(req.query.select) {
         const fields = req.query.select.replace(/,/g, " ")
         console.log(fields);
         query = query.select(fields)
     }
 
-    //sort
+    // sort
     if(req.query.sort) {
-        const sortBy = req.query.sort.replace(/,/g, " ") //specific synthax
+        const sortBy = req.query.sort.replace(/,/g, " ") // specific synthax
         query = query.sort(sortBy)
     } else {
         query = query.sort('-createdAt')
     }
 
-    //Pagination
+    // Pagination
     const page = parseInt(req.query.page, 10) || 1
     const limit = parseInt(req.query.limit, 10) || 25
     const startIndex = (page - 1) * limit
@@ -49,10 +49,10 @@ const advancedResults = (model, populate) => async (req, res, next) => {
         query = query.populate(populate)
     }
 
-    //get result
+    // get result
     const results = await query
 
-    //Pagination result
+    // Pagination result
     const pagination = {}
     if(endIndex < total) {
         pagination.next = {
